@@ -2,6 +2,7 @@
 Remaking My ANNe effect
 
 Tested with Python 2.7.12 
+
 I suggest using a virtualenvironment to ensure that all packages are correct
 
 ```
@@ -10,16 +11,18 @@ virtualenv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+
 From what I remember, this application requires ffmpeg and portaudio19-dev 
 
-
 To start the program, run 
+
 ```
 python manne_gui.py
 ```
 
-Type the relative path of the track you would like to filter into the "Track Name" box
-Type the prefix of the trained model you would like to run (in this case just "all_frames") into the "Model Name" box
+Type the relative path of the track you would like to filter into the "Track Name" box.
+
+Type the prefix of the trained model you would like to run (in this case just "all_frames") into the "Model Name" box.
 
 Clicking "START" will start to filter the track through the neural network and play out audio in real time. Change the value of the sliders to change the latent representation of the audio. 
 
