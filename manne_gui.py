@@ -1,7 +1,6 @@
 from Tkinter import *
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
 import librosa
 import soundfile as sf
@@ -165,12 +164,12 @@ class Application(Frame):
         global decoder 
         global dec_graph
 
-        enc_filename = '/home/jt/hypderdub/'+self.model_name.get()+'_trained_encoder.h5'
-        encoder = load_model(enc_filename, compile=False)
+        data_path_enc = os.path.join(os.getcwd(),self.model_name.get()+'_trained_encoder.h5')
+        encoder = load_model(data_path_enc, compile=False)
         encoder._make_predict_function()
         enc_graph = tf.get_default_graph()
-        dec_filename = '/home/jt/hypderdub/'+self.model_name.get()+'_trained_decoder.h5'
-        decoder = load_model(dec_filename, compile=False)
+        data_path_dec = os.path.join(os.getcwd(),self.model_name.get()+'_trained_decoder.h5')
+        decoder = load_model(data_path_dec, compile=False)
         decoder._make_predict_function()
         dec_graph = tf.get_default_graph()
         return encoder, decoder
