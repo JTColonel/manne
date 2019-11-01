@@ -22,7 +22,7 @@ python manne_gui.py
 
 Type the relative path of the track you would like to filter into the "Track Name" box.
 
-Type the prefix of the trained model you would like to run (in this case just "all_frames") into the "Model Name" box.
+Type the prefix of the trained model you would like to run (in this case just ```all_frames```) into the "Model Name" box.
 
 Clicking "START" will start to filter the track through the neural network and play out audio in real time. Change the value of the sliders to change the latent representation of the audio. 
 
@@ -36,3 +36,5 @@ To end a recording, just click the "RECORD" button again so that it is unchecked
 Clicking "QUIT" will close the application.
 
 ^_^
+
+"MANNe" pronunciation guide: https://www.youtube.com/watch?v=EmZvOhHF85I&feature=youtu.be&t=6
