@@ -37,4 +37,4 @@ Clicking "QUIT" will close the application.
 
 ^_^
 
-"MANNe" pronunciation guide: https://www.youtube.com/watch?v=EmZvOhHF85I&feature=youtu.be&t=6
+"MANNe" pronunciation guide: https://www.youtube.com/watch?v=EmZvOhHF85I&feature=youtu.be&t=5
