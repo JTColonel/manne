@@ -90,7 +90,6 @@ class Manne:
 	def get_loss(self, inputs, outputs):
 		global beta 
 		reconstruction_loss = mse(inputs[:,:2049],outputs)
-		#reconstruction_loss *= 2049
 		kl_loss = 1+self.z_log_var-K.square(self.z_mean)-K.exp(self.z_log_var)
 		kl_loss = K.sum(kl_loss, axis=-1)
 		kl_loss *= -0.5*beta
@@ -123,11 +122,7 @@ class Manne:
 		chroma = np.transpose(librosa.feature.chroma_stft(S=np.transpose(orig_frames), sr=44100))
 		chroma = librosa.feature.chroma_stft(S=np.transpose(orig_frames), sr=44100)
 		chroma = (chroma == chroma.max(axis=1)[:,None]).astype(int)
-		chroma = np.transpose(chroma)
-		
-		#first_diff = np.diff(orig_frames)
-		#augmentations = first_diff
-		
+		chroma = np.transpose(chroma)	
 		augmentations = chroma
 	
 		self.frames = np.hstack((orig_frames,augmentations))
@@ -157,14 +152,15 @@ class Manne:
 		else:
 			l2_penalty = 1e-7
 		
+		#8 Neuron Model from the paper
 		self.encoder_widths = [1024,512,256,128,64,32,16,8]
 		self.decoder_widths = [16,32,64,128,256,512,1024]
 		
-		#self.encoder_widths = [1024,512,256,128,64]
-		#self.decoder_widths = [128,256,512,1024]
+		#Lighter weight model
+		#self.encoder_widths = [512,256,128,64,8]
+		#self.decoder_widths = [64,128,256,512]
 		
 		decoder_outdim = 2049
-		#reg = l2(1e-4)
 		drop = 0.0
 		alpha_val=0.1
 		
@@ -173,16 +169,13 @@ class Manne:
 				activation=None,
 				kernel_regularizer=l2(l2_penalty))(input_spec)
 		encoded = LeakyReLU(alpha=alpha_val)(encoded)
-		encoded = Dropout(drop)(encoded)
 		for width in self.encoder_widths[1:-1]:
 			encoded = Dense(units=width, 
 				activation=None,
 				kernel_regularizer=l2(l2_penalty))(encoded)
 			encoded = LeakyReLU(alpha=alpha_val)(encoded)
-			encoded = Dropout(drop)(encoded)
 			
 		encoded = Dense(units=self.encoder_widths[-1], activation='sigmoid', kernel_regularizer=l2(l2_penalty))(encoded)
-		#encoded = LeakyReLU(alpha=alpha_val)(encoded)
 		
 		if self.net_type == 'vae':
 			self.z_mean = Dense(self.encoder_widths[-1],input_shape=(self.encoder_widths[-1],), name='z_mean')(encoded)
@@ -201,13 +194,11 @@ class Manne:
 			activation=None,
 			kernel_regularizer=l2(l2_penalty))(input_latent)
 		decoded = LeakyReLU(alpha=alpha_val)(decoded)
-		decoded = Dropout(drop)(decoded)
 		for width in self.decoder_widths[1:]:
 			decoded = Dense(units=width, 
 				activation=None,
 				kernel_regularizer=l2(l2_penalty))(decoded)
 			decoded = LeakyReLU(alpha=alpha_val)(decoded)
-			decoded = Dropout(drop)(decoded)
 		decoded = Dense(units=2049, 
 			activation='relu',
 			kernel_regularizer=l2(l2_penalty))(decoded)
@@ -233,7 +224,6 @@ class Manne:
 
 		print('\n net summary \n')
 		self.network.summary()
-		plot_model(self.network, to_file='model.png')
 		print('\n encoder summary \n')
 		self.encoder.summary()
 		print('\n decoder summary \n')
@@ -267,22 +257,7 @@ class Manne:
 					shuffle=True,
 					validation_data=(val_data, self.X_val),
 					callbacks=[alpha_changer]
-					)
-			'''
-			self.network.save_weights('temp.h5')
-			self.encoder.layers[8].rate=0.0
-			self.network = clone_model(self.network)
-			self.network.compile(optimizer=Adam(lr=1e-4), loss=self.my_mse)
-			self.network.load_weights('temp.h5')
-			self.network.fit(x=train_data, y=self.X_train,
-					epochs=self.n_epochs,
-					batch_size=200,
-					shuffle=True,
-					validation_data=(val_data, self.X_val),
-					callbacks=[alpha_changer]
-					)'''
-			
-			
+					)		
 		self.encoder.save('models/'+self.net_type+'_'+self.filename_out+'_trained_encoder.h5')
 		self.decoder.save('models/'+self.net_type+'_'+self.filename_out+'_trained_decoder.h5')
 		
@@ -317,7 +292,7 @@ class Manne:
 		elif args.filename_in == 'guitar':
 			mod = 3
 		else:
-			raise Exception('Unexpected filename_in')
+			mod = 1
 		
 		print('\n')
 		print('Evaluating performance on validation and test sets')
