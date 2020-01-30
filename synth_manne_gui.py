@@ -54,9 +54,17 @@ class Application(Frame):
         global fade_in
         global fade_out
         global wn_phase
+        global chroma_choice
+        global num_latents
+        global skip
 
         additional = 4
-        enc_mag = scales*np.ones((1,15))
+        enc_mag = scales*np.ones((1,num_latents))
+        if skip=='skip':
+            chroma_append = np.zeros((1,12))
+            chroma_append[0,chroma_choice] = 1
+            enc_mag = np.hstack((enc_mag,chroma_append))
+
 
         ind_array = np.arange((seg_length*ii-3),(seg_length*(ii+1)+1))
         temp_phase = wn_phase[ind_array,:]
@@ -65,8 +73,6 @@ class Application(Frame):
         temp_out_mag = np.tile(temp_out_mag,(NUM_CHUNKS+additional,1))
         E = temp_out_mag*np.exp(1j*temp_phase)
         _, now_out = signal.istft(E.T, fs=44100, noverlap=3*1024, nfft=4096)
-        # _, now_out = signal.istft(E, fs=44100, nperseg=4096, noverlap=3*1024, nfft=4096)
-        # now_out = np.float32(librosa.istft(50*E))
         out = np.float32(now_out[3*CHUNK:]*(0.08/np.max(np.abs(now_out))))
         final_out = out.reshape(((len(out)/CHUNK),CHUNK))
         return final_out
@@ -150,20 +156,10 @@ class Application(Frame):
                 out_scales[the_rows,:] = np.tile(temp_scales[ii,:],(len(the_rows),1))
                 kurt+=1
             ind_array = np.arange((first_ind),(NUM_CHUNKS*(last_ind)))
-            # temp_out_mag = mag[ind_array,:]
             temp_phase = wn_phase[ind_array,:]
-            # temp_remember = remember[ind_array]
 
-            # with enc_graph.as_default():
-            #     temp_enc_mag = encoder.predict(temp_out_mag)
-            #     enc_mag = temp_enc_mag * out_scales #NEED TO ADD SCALE HERE
             with dec_graph.as_default():
                 temp_out_mag = decoder.predict(out_scales)
-
-            # out_mag = temp_out_mag.T * temp_remember
-            # E = out_mag*np.exp(1j*temp_phase)
-            # out = np.float32(librosa.istft(E))
-            # out = (0.9/np.max(np.abs(out)))*out
 
             E = temp_out_mag*np.exp(1j*temp_phase)
             _, now_out = signal.istft(E.T, fs=44100, noverlap=3*1024, nfft=4096)
@@ -290,25 +286,54 @@ class Application(Frame):
 
     def createSliders(self):
         global scales 
-        scales = np.ones(15)
+        global num_latents
+        scales = np.ones(num_latents)
         self.scale_list = []
-        for w in range(15):
-            scale = Scale(self,from_=40, to=-10,length=200)
+        for w in range(num_latents):
+            scale = Scale(self,from_=110, to=-10,length=200)
             scale.pack()
-            scale.place(relx=w/16.,rely=0.2)
-            scale.set(10)
+            scale.place(relx=w/(float(num_latents)),rely=0.2)
+            scale.set(0)
             scales[w]=scale.get()
             self.scale_list.append(scale)
+
+    def createButtons(self):
+        global chroma_val
+        self.chroma_val = IntVar()
+        self.chroma_val.set(0)
+        NOTE_OPTIONS = [
+        ('C',0),
+        ('C#',1),
+        ('D',2),
+        ('D#',3),
+        ('E',4),
+        ('F',5),
+        ('F#',6),
+        ('G',7),
+        ('G#',8),
+        ('A',9),
+        ('A#',10),
+        ('B',11)
+        ]
+
+        for text, val in NOTE_OPTIONS:
+            b = Radiobutton(self, text=text, value=val, variable=self.chroma_val)
+            b.pack()
+            b.place(relx=0.2+val/19.,rely=0.1)
+
 
     def update_scales(self):
         global scales 
         global recorded_scales
         global POLL_TIME
+        global chroma_choice
+        global num_latents
 
         POLL_TIME = 100
-        temp_scales = np.ones(15)
-        for w in range(15):
-            temp_scales[w]=self.scale_list[w].get()/10.
+        chroma_choice = self.chroma_val.get()
+        temp_scales = np.ones(8)
+        for w in range(num_latents):
+            temp_scales[w]=self.scale_list[w].get()/300.
         scales = temp_scales
         if self.RECORD_var.get() == 1:
             recorded_scales.append(scales)
@@ -321,11 +346,16 @@ class Application(Frame):
         Frame.__init__(self, master,width=800, height=800)
         self.pack()
         self.createWidgets()
+        self.createButtons()
         self.createSliders()
         recorded_scales = []
         self.update_scales()
 
 global app 
+global num_latents
+global skip
+num_latents = int(sys.argv[1])
+skip = sys.argv[2]
 root = Tk()
 app = Application(master=root)
 app.mainloop()
