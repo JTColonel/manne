@@ -29,7 +29,7 @@ pkg-resources==0.0.0
 protobuf==3.10.0
 PyAudio==0.2.11
 pycparser==2.19
-pyo==1.0.0
+pyo==1.0.3
 pyparsing==2.4.2
 python-dateutil==2.8.0
 pytz==2019.3
